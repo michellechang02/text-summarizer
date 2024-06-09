@@ -1,12 +1,33 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import './App.css'
-import { ChakraProvider, VStack, Card, CardHeader, Heading, Textarea, Flex, HStack, Button} from '@chakra-ui/react'
-import {Clipboard, FilePlus} from 'react-feather'
+import { ChakraProvider, VStack, Card, CardHeader, Heading, Textarea, Flex, HStack, Button, useClipboard, Spacer} from '@chakra-ui/react'
+import {FilePlus, Clipboard} from 'react-feather'
 
 function App() {
   let [value, setValue] = useState('')
+  let [summary, setSummary] = useState('')
+  const { hasCopied, onCopy } = useClipboard(summary);
+
+  const summarizeText = async () => {
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/summarize', {
+        text: value,
+      });
+
+      if (response.status === 200) {
+        setSummary(response.data.summary);
+      } else {
+        console.error('Failed to summarize text');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  useEffect(() => {
+
+  }, [summary])
 
   
 
@@ -18,8 +39,14 @@ function App() {
           
           <CardHeader>
             <HStack>
-            <Heading size='md'>Enter Text to Summarize</Heading>
-            <Button ml={5}><FilePlus/></Button>
+            <Heading size='md'>Initial Text</Heading>
+            <Button ml={5} onClick={summarizeText}>
+            <HStack spacing={2}>
+            <span>Summarize</span>
+            <FilePlus />
+          </HStack>
+            </Button>
+            
             </HStack>
           </CardHeader>
           <Textarea
@@ -34,11 +61,16 @@ function App() {
           <CardHeader>
           <HStack>
             <Heading size='md'>Summarized Text</Heading>
-            <Button ml={5}><Clipboard/></Button>
+            <Button ml={5} onClick={onCopy}>
+          <HStack spacing={2}>
+            <span>{hasCopied ? 'Copied' : 'Copy'}</span>
+            <Clipboard />
+          </HStack>
+        </Button>
             </HStack>
           </CardHeader>
           <Textarea
-            value={value}
+            value={summary}
             isReadOnly
             placeholder="Summarized text will appear here"
             size="sm"
